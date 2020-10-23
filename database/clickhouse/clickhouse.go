@@ -216,11 +216,11 @@ func (ch *ClickHouse) ensureVersionTable() (err error) {
 	}
 	// if not, create the empty migration table
 	query = `
-		CREATE TABLE ` + ch.config.MigrationsTable + ` (
+		CREATE TABLE ` + ch.config.MigrationsTable + ` ON CLUSTER '{cluster}'(
 			version    Int64, 
 			dirty      UInt8,
 			sequence   UInt64
-		) Engine=TinyLog
+		) Engine=ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/storage/` + ch.config.MigrationsTable + `', '{replica}') ORDER BY tuple()
 	`
 	if _, err := ch.conn.Exec(query); err != nil {
 		return &database.Error{OrigErr: err, Query: []byte(query)}
